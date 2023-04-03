@@ -10,6 +10,7 @@
 #define CALC_DIALECT
 
 include "mlir/IR/OpBase.td"
+include "mlir/Interfaces/SideEffectInterfaces.td"
 
 //===----------------------------------------------------------------------===//
 // Calc dialect definition.
@@ -18,17 +19,12 @@ include "mlir/IR/OpBase.td"
 def Calc_Dialect : Dialect {
     let name = "calc";
     let summary = "A calc out-of-tree MLIR dialect.";
-    let description = [{
-        This dialect is an example of an out-of-tree MLIR dialect designed to
-        illustrate the basic setup required to develop MLIR-based tools without
-        working inside of the LLVM source tree.
-    }];
-    let cppNamespace = "::mlir::calc";
-
-    let useDefaultTypePrinterParser = 1;
-    let extraClassDeclaration = [{
-        void registerTypes();
-    }];
+    let cppNamespace = "::calc";
+    //let useDefaultTypePrinterParser = 1;
+    let useFoldAPI = kEmitFoldAdaptorFolder;
+//    let extraClassDeclaration = [{
+//        void registerTypes();
+//    }];
 }
 
 //===----------------------------------------------------------------------===//

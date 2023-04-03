@@ -9,35 +9,58 @@
 #ifndef CALC_OPS
 #define CALC_OPS
 
-include "Calc/CalcTypes.td"
-include "mlir/Interfaces/InferTypeOpInterface.td"
+include "Calc/CalcDialect.td"
+//include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
-def Calc_FooOp : Calc_Op<"foo", [Pure,
-                                             SameOperandsAndResultType]> {
-    let summary = "Illustrates how to define an operation.";
-    let description = [{
-        The `calc.foo` operation illustrates how to define a new
-        operation in a dialect. It uses an operation trait to declare that it
-        has no side effects.
+def ConstantOp : Calc_Op<"constant",
+    [ConstantLike, Pure]> {
+  let summary = "constant";
+  let arguments = (ins I64Attr:$value);
+  let results = (outs I64);
+  let builders = [
+    OpBuilder<(ins "uint64_t":$value)>
+  ];
+}
 
-        This operation takes an integer argument and returns an integer.
+def AddOp : Calc_Op<"add"> {
+  let summary = "add";
+  let arguments = (ins I64:$lhs, I64:$rhs);
+  let results = (outs I64);
+}
 
-        Example:
+def SubOp : Calc_Op<"sub"> {
+  let summary = "sub";
+  let arguments = (ins I64:$lhs, I64:$rhs);
+  let results = (outs I64);
+}
 
-        ```mlir
-        %0 = arith.constant 2 : i32
-        // Apply the foo operation to %0
-        %1 = calc.foo %0 : i32
-        ```
-    }];
+def MulOp : Calc_Op<"mul"> {
+  let summary = "mul";
+  let arguments = (ins I64:$lhs, I64:$rhs);
+  let results = (outs I64);
+}
 
-    let arguments = (ins I32:$input);
-    let results = (outs I32:$res);
+def DivOp : Calc_Op<"div"> {
+  let summary = "div";
+  let arguments = (ins I64:$lhs, I64:$rhs);
+  let results = (outs I64);
+}
 
-    let assemblyFormat = [{
-        $input attr-dict `:` type($input)
-    }];
+def GetVariableOp : Calc_Op<"getVar"> {
+  let summary = "getVar";
+  let arguments = (ins StrAttr:$varName);
+  let results = (outs I64);
+}
+
+def SetVariableOp : Calc_Op<"setVar"> {
+  let summary = "setVar";
+  let arguments = (ins StrAttr:$varName, I64:$value);
+}
+
+def EvaluateOp : Calc_Op<"evaluate"> {
+  let summary = "evaluate";
+  let arguments = (I64:$value);
 }
 
 #endif // CALC_OPS

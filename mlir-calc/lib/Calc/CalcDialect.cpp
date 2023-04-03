@@ -8,10 +8,9 @@
 
 #include "Calc/CalcDialect.h"
 #include "Calc/CalcOps.h"
-#include "Calc/CalcTypes.h"
 
 using namespace mlir;
-using namespace mlir::calc;
+using namespace calc;
 
 #include "Calc/CalcOpsDialect.cpp.inc"
 
@@ -24,5 +23,4 @@ void CalcDialect::initialize() {
 #define GET_OP_LIST
 #include "Calc/CalcOps.cpp.inc"
       >();
-  registerTypes();
 }

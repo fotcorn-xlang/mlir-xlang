@@ -1,5 +1,4 @@
 add_mlir_dialect_library(MLIRCalc
-        CalcTypes.cpp
         CalcDialect.cpp
         CalcOps.cpp
 
