@@ -104,38 +104,68 @@ public:
     builder.setInsertionPointToStart(module.getBody());
     this->filename = builder.getStringAttr(filename);
   }
-  void generateRoot(const AstNode &rootNode);
+  void generateRoot(const AstNode &node);
 };
 
-mlir::Value MLIRGen::generateMLIR(const AstNode &rootNode) {
-  auto location = mlir::FileLineColLoc::get(filename, rootNode->begin().line,
-                                            rootNode->begin().column);
-  if (rootNode->is_type<grammar::integer>()) {
-    return builder.create<calc::ConstantOp>(location,
-                                            atoi(rootNode->string().c_str()));
+mlir::Value MLIRGen::generateMLIR(const AstNode &node) {
+  auto location = mlir::FileLineColLoc::get(filename, node->begin().line,
+                                            node->begin().column);
+  // integer
+  if (node->is_type<grammar::integer>()) {
+    int64_t value = atoi(node->string().c_str());
+    return builder.create<calc::ConstantOp>(location, value);
+
+  // identifier
+  } else if (node->is_type<grammar::identifier>()) {
+    auto varName = builder.getStringAttr(node->string());
+    return builder.create<calc::GetVariableOp>(location, varName);
+
+  // add and sub
+  } else if (node->is_type<grammar::add_op>()) {
+    auto lhs = generateMLIR(node->children[0]);
+    auto rhs = generateMLIR(node->children[1]);
+    if (node->string() == "+") {
+      return builder.create<calc::AddOp>(location, lhs, rhs);
+    } else if (node->string() == "-") {
+      return builder.create<calc::SubOp>(location, lhs, rhs);
+    } else {
+      llvm_unreachable("unsupported add_op operator");
+    }
+
+  // mul and div
+  } else if (node->is_type<grammar::mul_op>()) {
+    auto lhs = generateMLIR(node->children[0]);
+    auto rhs = generateMLIR(node->children[1]);
+    if (node->string() == "*") {
+      return builder.create<calc::MulOp>(location, lhs, rhs);
+    } else if (node->string() == "/") {
+      return builder.create<calc::DivOp>(location, lhs, rhs);
+    } else {
+      llvm_unreachable("unsupported mul_op operator");
+    }
   } else {
     llvm_unreachable("unhandled AstNode type");
   }
 }
 
-void MLIRGen::generateRoot(const AstNode &rootNode) {
-  auto location = mlir::FileLineColLoc::get(filename, rootNode->begin().line,
-                                            rootNode->begin().column);
-  if (rootNode->is_type<grammar::assignment>()) {
-    assert(rootNode->children.size() == 2);
+void MLIRGen::generateRoot(const AstNode &node) {
+  auto location = mlir::FileLineColLoc::get(filename, node->begin().line,
+                                            node->begin().column);
+  if (node->is_type<grammar::assignment>()) {
+    assert(node->children.size() == 2);
 
     // identifier
-    const AstNode &identifierNode = rootNode->children[0];
-    assert(identifierNode->type == "identifier");
+    const AstNode &identifierNode = node->children[0];
+    assert(identifierNode->is_type<grammar::identifier>());
     const std::string identifier = identifierNode->string();
 
     // value
-    const AstNode &valueNode = rootNode->children[1];
+    const AstNode &valueNode = node->children[1];
     mlir::Value value = generateMLIR(valueNode);
 
     builder.create<calc::SetVariableOp>(location, identifier, value);
   } else {
-    mlir::Value value = generateMLIR(rootNode);
+    mlir::Value value = generateMLIR(node);
     builder.create<calc::PrintOp>(location, value);
   }
 }
@@ -181,8 +211,8 @@ int main(int argc, char *argv[]) {
   mlir::ModuleOp module = mlir::ModuleOp::create(location);
   MLIRGen gen(context, module, fileName);
 
-  for (const AstNode &rootNode : root->children) {
-    gen.generateRoot(rootNode);
+  for (const AstNode &node : root->children) {
+    gen.generateRoot(node);
   }
 
   module.dump();

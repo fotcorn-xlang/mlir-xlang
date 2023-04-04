@@ -20,11 +20,7 @@ def Calc_Dialect : Dialect {
     let name = "calc";
     let summary = "A calc out-of-tree MLIR dialect.";
     let cppNamespace = "::calc";
-    //let useDefaultTypePrinterParser = 1;
     let useFoldAPI = kEmitFoldAdaptorFolder;
-//    let extraClassDeclaration = [{
-//        void registerTypes();
-//    }];
 }
 
 //===----------------------------------------------------------------------===//

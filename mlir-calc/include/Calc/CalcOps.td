@@ -10,7 +10,6 @@
 #define CALC_OPS
 
 include "Calc/CalcDialect.td"
-//include "mlir/Interfaces/InferTypeOpInterface.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
 def ConstantOp : Calc_Op<"constant",
@@ -27,30 +26,45 @@ def AddOp : Calc_Op<"add"> {
   let summary = "add";
   let arguments = (ins SI64:$lhs, SI64:$rhs);
   let results = (outs SI64);
+  let builders = [
+    OpBuilder<(ins "mlir::Value":$lhs, "mlir::Value":$rhs)>
+  ];
 }
 
 def SubOp : Calc_Op<"sub"> {
   let summary = "sub";
   let arguments = (ins SI64:$lhs, SI64:$rhs);
   let results = (outs SI64);
+  let builders = [
+    OpBuilder<(ins "mlir::Value":$lhs, "mlir::Value":$rhs)>
+  ];
 }
 
 def MulOp : Calc_Op<"mul"> {
   let summary = "mul";
   let arguments = (ins SI64:$lhs, SI64:$rhs);
   let results = (outs SI64);
+  let builders = [
+    OpBuilder<(ins "mlir::Value":$lhs, "mlir::Value":$rhs)>
+  ];
 }
 
 def DivOp : Calc_Op<"div"> {
   let summary = "div";
   let arguments = (ins SI64:$lhs, SI64:$rhs);
   let results = (outs SI64);
+  let builders = [
+    OpBuilder<(ins "mlir::Value":$lhs, "mlir::Value":$rhs)>
+  ];
 }
 
 def GetVariableOp : Calc_Op<"getVar"> {
   let summary = "getVar";
   let arguments = (ins StrAttr:$varName);
   let results = (outs SI64);
+  let builders = [
+    OpBuilder<(ins "llvm::StringRef":$varName)>
+  ];
 }
 
 def SetVariableOp : Calc_Op<"setVar"> {
