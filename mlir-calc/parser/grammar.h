@@ -18,5 +18,10 @@ struct term : seq<factor, star<seq<ws, mul_op, ws, factor>>> {};
 struct expression : seq<term, star<seq<ws, add_op, ws, term>>> {};
 struct assignment : seq<identifier, ws, one<'='>, ws, expression> {};
 
-struct start : seq<sor<assignment, expression>, eof> {};
+struct statement : seq<sor<assignment, expression>> {};
+struct end_of_statement : plus<one<'\n', '\r', ';'>> {};
+
+struct start : seq<statement, star<seq<end_of_statement, statement >>> {};
+
+//struct start : seq<sor<assignment, expression>, plus<one<'\n', '\r'>>> {};
 } // namespace grammar

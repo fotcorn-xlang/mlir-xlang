@@ -12,3 +12,13 @@
 
 #define GET_OP_CLASSES
 #include "Calc/CalcOps.cpp.inc"
+
+namespace calc {
+void ConstantOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
+                       int64_t value) {
+  auto dataType = mlir::IntegerType::get(builder.getContext(), 64, mlir::IntegerType::Signed);
+  auto dataAttribute = mlir::IntegerAttr::get(dataType, value);
+
+  ConstantOp::build(builder, state, dataType, dataAttribute);
+}
+} // namespace calc

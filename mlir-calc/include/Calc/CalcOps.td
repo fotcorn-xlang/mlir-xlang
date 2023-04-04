@@ -16,51 +16,51 @@ include "mlir/Interfaces/SideEffectInterfaces.td"
 def ConstantOp : Calc_Op<"constant",
     [ConstantLike, Pure]> {
   let summary = "constant";
-  let arguments = (ins I64Attr:$value);
-  let results = (outs I64);
+  let arguments = (ins SI64Attr:$value);
+  let results = (outs SI64);
   let builders = [
-    OpBuilder<(ins "uint64_t":$value)>
+    OpBuilder<(ins "int64_t":$value)>
   ];
 }
 
 def AddOp : Calc_Op<"add"> {
   let summary = "add";
-  let arguments = (ins I64:$lhs, I64:$rhs);
-  let results = (outs I64);
+  let arguments = (ins SI64:$lhs, SI64:$rhs);
+  let results = (outs SI64);
 }
 
 def SubOp : Calc_Op<"sub"> {
   let summary = "sub";
-  let arguments = (ins I64:$lhs, I64:$rhs);
-  let results = (outs I64);
+  let arguments = (ins SI64:$lhs, SI64:$rhs);
+  let results = (outs SI64);
 }
 
 def MulOp : Calc_Op<"mul"> {
   let summary = "mul";
-  let arguments = (ins I64:$lhs, I64:$rhs);
-  let results = (outs I64);
+  let arguments = (ins SI64:$lhs, SI64:$rhs);
+  let results = (outs SI64);
 }
 
 def DivOp : Calc_Op<"div"> {
   let summary = "div";
-  let arguments = (ins I64:$lhs, I64:$rhs);
-  let results = (outs I64);
+  let arguments = (ins SI64:$lhs, SI64:$rhs);
+  let results = (outs SI64);
 }
 
 def GetVariableOp : Calc_Op<"getVar"> {
   let summary = "getVar";
   let arguments = (ins StrAttr:$varName);
-  let results = (outs I64);
+  let results = (outs SI64);
 }
 
 def SetVariableOp : Calc_Op<"setVar"> {
   let summary = "setVar";
-  let arguments = (ins StrAttr:$varName, I64:$value);
+  let arguments = (ins StrAttr:$varName, SI64:$value);
 }
 
-def EvaluateOp : Calc_Op<"evaluate"> {
-  let summary = "evaluate";
-  let arguments = (I64:$value);
+def PrintOp : Calc_Op<"print"> {
+  let summary = "print";
+  let arguments = (ins SI64:$value);
 }
 
 #endif // CALC_OPS

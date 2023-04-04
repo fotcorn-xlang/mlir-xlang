@@ -1,3 +1,4 @@
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -14,17 +15,6 @@
 #include "Calc/CalcDialect.h"
 #include "Calc/CalcOps.h"
 #include "grammar.h"
-
-struct ParserState {
-  mlir::MLIRContext context;
-  mlir::OpBuilder builder;
-  mlir::OwningOpRef<mlir::ModuleOp> module;
-
-  ParserState() : builder(&context) {
-    context.getOrLoadDialect<calc::CalcDialect>();
-    module = mlir::ModuleOp::create(mlir::UnknownLoc::get(&context));
-  }
-};
 
 // source:
 // https://github.com/taocpp/PEGTL/blob/c5eed0d84b5420dc820a7c0a381a87d68f5a1038/src/example/pegtl/parse_tree.cpp#L42
@@ -100,17 +90,107 @@ using parseTreeSelector = tao::pegtl::parse_tree::selector<
         // clang-format on
         >>;
 
-int main() {
-  std::string inStr;
-  std::getline(std::cin, inStr);
-  tao::pegtl::memory_input<> in(inStr, "");
+using AstNode = std::unique_ptr<tao::pegtl::parse_tree::node>;
 
-  auto root =
-      tao::pegtl::parse_tree::parse<grammar::start, parseTreeSelector>(in);
+class MLIRGen {
+  mlir::OpBuilder builder;
+  mlir::Value generateMLIR(const AstNode &node);
+  mlir::StringAttr filename;
 
-  if (root) {
-    tao::pegtl::parse_tree::print_dot(std::cout, *root);
+public:
+  MLIRGen(mlir::MLIRContext &context, mlir::ModuleOp &module,
+          const std::string &filename)
+      : builder(&context) {
+    builder.setInsertionPointToStart(module.getBody());
+    this->filename = builder.getStringAttr(filename);
+  }
+  void generateRoot(const AstNode &rootNode);
+};
+
+mlir::Value MLIRGen::generateMLIR(const AstNode &rootNode) {
+  auto location = mlir::FileLineColLoc::get(filename, rootNode->begin().line,
+                                            rootNode->begin().column);
+  if (rootNode->is_type<grammar::integer>()) {
+    return builder.create<calc::ConstantOp>(location,
+                                            atoi(rootNode->string().c_str()));
+  } else {
+    llvm_unreachable("unhandled AstNode type");
+  }
+}
+
+void MLIRGen::generateRoot(const AstNode &rootNode) {
+  auto location = mlir::FileLineColLoc::get(filename, rootNode->begin().line,
+                                            rootNode->begin().column);
+  if (rootNode->is_type<grammar::assignment>()) {
+    assert(rootNode->children.size() == 2);
+
+    // identifier
+    const AstNode &identifierNode = rootNode->children[0];
+    assert(identifierNode->type == "identifier");
+    const std::string identifier = identifierNode->string();
+
+    // value
+    const AstNode &valueNode = rootNode->children[1];
+    mlir::Value value = generateMLIR(valueNode);
+
+    builder.create<calc::SetVariableOp>(location, identifier, value);
+  } else {
+    mlir::Value value = generateMLIR(rootNode);
+    builder.create<calc::PrintOp>(location, value);
+  }
+}
+
+int main(int argc, char *argv[]) {
+  if (argc != 2) {
+    std::cerr << "Error: Please provide exactly one file name as a parameter."
+              << std::endl;
+    return 1;
   }
 
+  std::string fileName = argv[1];
+  std::ifstream inputFile(fileName);
+
+  // Check if the file is opened successfully
+  if (!inputFile) {
+    std::cerr << "Error: Unable to open the file: " << fileName << std::endl;
+    return 1;
+  }
+
+  // Read the file content into an std::string
+  std::stringstream fileContent;
+  fileContent << inputFile.rdbuf();
+  inputFile.close();
+
+  std::string inStr = fileContent.str();
+  tao::pegtl::memory_input<> in(inStr, fileName);
+
+  AstNode root =
+      tao::pegtl::parse_tree::parse<grammar::start, parseTreeSelector>(in);
+
+  if (!root) {
+    std::cerr << "parse failed" << std::endl;
+    return 1;
+  }
+
+  mlir::MLIRContext context;
+  context.getOrLoadDialect<calc::CalcDialect>();
+
+  auto fileNameAttr = mlir::StringAttr::get(&context, fileName);
+  auto location = mlir::FileLineColLoc::get(fileNameAttr, 0, 0);
+
+  mlir::ModuleOp module = mlir::ModuleOp::create(location);
+  MLIRGen gen(context, module, fileName);
+
+  for (const AstNode &rootNode : root->children) {
+    gen.generateRoot(rootNode);
+  }
+
+  module.dump();
+
+  // Verify the function and module.
+  if (mlir::failed(mlir::verify(module))) {
+    llvm::errs() << "Error: module verification failed\n";
+    return 1;
+  }
   return 0;
 }
