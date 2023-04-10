@@ -9,6 +9,9 @@
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/Verifier.h"
+#include "llvm/Support/Error.h"
+
+#include "Calc/NativeCodeGen.h"
 
 int main() {
   mlir::MLIRContext context;
@@ -62,6 +65,15 @@ int main() {
   if (mlir::failed(verify(func)) || mlir::failed(mlir::verify(mod))) {
     llvm::errs() << "Error: module verification failed\n";
     return 1;
+  }
+
+  llvm::Expected<std::unique_ptr<llvm::MemoryBuffer>> ret = calc::generateNativeBinary(mod);
+  if (auto err = ret.takeError()) {
+    llvm::errs() << "Error generating native code: \n";
+    llvm::errs() << llvm::toString(std::move(err)) << '\n';
+    return 1;
+  } else {
+    // todo: write to file
   }
 
   return 0;
