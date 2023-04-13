@@ -1,7 +1,6 @@
 add_mlir_dialect_library(MLIRCalc
         CalcDialect.cpp
         CalcOps.cpp
-        NativeCodeGen.cpp
 
         ADDITIONAL_HEADER_DIRS
         ${PROJECT_SOURCE_DIR}/include/Calc
@@ -12,4 +11,6 @@ add_mlir_dialect_library(MLIRCalc
 	LINK_LIBS PUBLIC
 	MLIRIR
         MLIRInferTypeOpInterface
+        MLIRLLVMCommonConversion
+        MLIRLLVMToLLVMIRTranslation
 	)

@@ -52,7 +52,9 @@ int main() {
   mlir::Value formatStr = mlir::LLVM::createGlobalString(
       builder.getUnknownLoc(), builder, "formatStr", "%i\n",
       mlir::LLVM::Linkage::Internal);
-  builder.create<mlir::LLVM::CallOp>(builder.getUnknownLoc(), llvmI32Ty, "printf", llvm::ArrayRef<mlir::Value>({formatStr, result}));
+  builder.create<mlir::LLVM::CallOp>(
+      builder.getUnknownLoc(), llvmI32Ty, "printf",
+      llvm::ArrayRef<mlir::Value>({formatStr, result}));
 
   mlir::Value retVal = builder.create<mlir::arith::ConstantIntOp>(
       builder.getUnknownLoc(), 0, 32);
@@ -67,14 +69,11 @@ int main() {
     return 1;
   }
 
-  llvm::Expected<std::unique_ptr<llvm::MemoryBuffer>> ret = calc::generateNativeBinary(mod);
-  if (auto err = ret.takeError()) {
+  llvm::Error err = calc::generateNativeBinary(mod, "main");
+  if (err) {
     llvm::errs() << "Error generating native code: \n";
     llvm::errs() << llvm::toString(std::move(err)) << '\n';
     return 1;
-  } else {
-    // todo: write to file
   }
-
   return 0;
 }

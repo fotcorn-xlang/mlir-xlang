@@ -9,10 +9,11 @@
 
 namespace mlir {
 class ModuleOp;
-}
+class MLIRContext;
+} // namespace mlir
 
 namespace calc {
-llvm::Expected<std::unique_ptr<llvm::MemoryBuffer>>
-generateNativeBinary(const mlir::ModuleOp &module);
-}
+llvm::Error generateNativeBinary(mlir::ModuleOp &Module,
+                                 llvm::StringRef FilePath);
+} // namespace calc
 #endif // CALC_NATIVECODEGEN_H
